@@ -25,6 +25,12 @@ var (
 type Exporter struct {
 	jstatPath string
 	targetPid string
+	newMax  prometheus.Gauge
+	newCommit  prometheus.Gauge
+	oldMax  prometheus.Gauge
+	oldCommit  prometheus.Gauge
+	metaMax  prometheus.Gauge
+	metaCommit  prometheus.Gauge
 	metaUsed  prometheus.Gauge
 	oldUsed   prometheus.Gauge
 }
@@ -33,6 +39,36 @@ func NewExporter(jstatPath string, targetPid string) *Exporter {
 	return &Exporter{
 		jstatPath: jstatPath,
 		targetPid: targetPid,
+		newMax: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "newMax",
+			Help:      "newMax",
+		}),
+		newCommit: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "newCommit",
+			Help:      "newCommit",
+		}),
+		oldMax: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "oldMax",
+			Help:      "oldMax",
+		}),
+		oldCommit: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "oldCommit",
+			Help:      "oldCommit",
+		}),
+		metaMax: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "metaMax",
+			Help:      "metaMax",
+		}),
+		metaCommit: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "metaCommit",
+			Help:      "metaCommit",
+		}),
 		metaUsed: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Name:      "metaUsed",
@@ -48,15 +84,51 @@ func NewExporter(jstatPath string, targetPid string) *Exporter {
 
 // Describe implements the prometheus.Collector interface.
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
+	e.newMax.Describe(ch)
+	e.newCommit.Describe(ch)
+	e.oldMax.Describe(ch)
+	e.oldCommit.Describe(ch)
+	e.metaMax.Describe(ch)
+	e.metaCommit.Describe(ch)
 	e.metaUsed.Describe(ch)
 	e.oldUsed.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface.
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
+	e.JstatGccapacity(ch)
+	e.JstatGcold(ch)
+}
+
+func (e *Exporter) JstatGccapacity(ch chan<- prometheus.Metric) {
+
+	out, err := exec.Command(e.jstatPath, "-gccapacity", e.targetPid).Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, line := range strings.Split(string(out), "\n") {
+		if i == 1 {
+			parts := strings.Fields(line)
+			newMax, err := strconv.ParseFloat(parts[1], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.newMax.Set(newMax)
+			e.newMax.Collect(ch)
+			newCommit, err := strconv.ParseFloat(parts[2], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.newCommit.Set(newCommit)
+			e.newCommit.Collect(ch)
+		}
+	}
+}
+
+func (e *Exporter) JstatGcold(ch chan<- prometheus.Metric) {
 
 	out, err := exec.Command(e.jstatPath, "-gcold", e.targetPid).Output()
-
 	if err != nil {
 		log.Fatal(err)
 	}
