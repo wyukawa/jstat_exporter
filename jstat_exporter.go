@@ -19,7 +19,7 @@ var (
 	listenAddress = flag.String("web.listen-address", ":9010", "Address on which to expose metrics and web interface.")
 	metricsPath   = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
 	jstatPath     = flag.String("jstat.path", "/usr/bin/jstat", "jstat path")
-	targetPid     = flag.String("target.pid", "0", "target pid")
+	targetPid     = flag.String("target.pid", ":0", "target pid")
 )
 
 type Exporter struct {

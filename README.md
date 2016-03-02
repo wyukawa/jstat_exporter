@@ -10,10 +10,14 @@ go build jstat_exporter.go
 
 Help on flags of jstat_exporter:
 ```
--web.listen-address string
-    Address on which to expose metrics and web interface. (default ":9010")
--web.telemetry-path string
-    Path under which to expose metrics. (default "/metrics")
+  -jstat.path string
+    	jstat path (default "/usr/bin/jstat")
+  -target.pid string
+    	target pid (default ":0")
+  -web.listen-address string
+    	Address on which to expose metrics and web interface. (default ":9010")
+  -web.telemetry-path string
+    	Path under which to expose metrics. (default "/metrics")
 ```
 
 Tested on JDK8
