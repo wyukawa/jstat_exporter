@@ -33,6 +33,9 @@ type Exporter struct {
 	metaCommit  prometheus.Gauge
 	metaUsed  prometheus.Gauge
 	oldUsed   prometheus.Gauge
+	sv0Used   prometheus.Gauge
+	sv1Used   prometheus.Gauge
+	edenUsed   prometheus.Gauge
 }
 
 func NewExporter(jstatPath string, targetPid string) *Exporter {
@@ -79,6 +82,21 @@ func NewExporter(jstatPath string, targetPid string) *Exporter {
 			Name:      "oldUsed",
 			Help:      "oldUsed",
 		}),
+		sv0Used: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "sv0Used",
+			Help:      "sv0Used",
+		}),
+		sv1Used: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "sv1Used",
+			Help:      "sv1Used",
+		}),
+		edenUsed: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "edenUsed",
+			Help:      "edenUsed",
+		}),
 	}
 }
 
@@ -92,12 +110,16 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	e.metaCommit.Describe(ch)
 	e.metaUsed.Describe(ch)
 	e.oldUsed.Describe(ch)
+	e.sv0Used.Describe(ch)
+	e.sv1Used.Describe(ch)
+	e.edenUsed.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface.
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.JstatGccapacity(ch)
 	e.JstatGcold(ch)
+	e.JstatGcnew(ch)
 }
 
 func (e *Exporter) JstatGccapacity(ch chan<- prometheus.Metric) {
@@ -148,6 +170,38 @@ func (e *Exporter) JstatGcold(ch chan<- prometheus.Metric) {
 			}
 			e.oldUsed.Set(oldUsed) // OU: Old space utilization (kB).
 			e.oldUsed.Collect(ch)
+		}
+	}
+}
+
+func (e *Exporter) JstatGcnew(ch chan<- prometheus.Metric) {
+
+	out, err := exec.Command(e.jstatPath, "-gcnew", e.targetPid).Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, line := range strings.Split(string(out), "\n") {
+		if i == 1 {
+			parts := strings.Fields(line)
+			sv0Used, err := strconv.ParseFloat(parts[2], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.sv0Used.Set(sv0Used)
+			e.sv0Used.Collect(ch)
+			sv1Used, err := strconv.ParseFloat(parts[3], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.sv1Used.Set(sv1Used)
+			e.sv1Used.Collect(ch)
+			edenUsed, err := strconv.ParseFloat(parts[8], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.edenUsed.Set(edenUsed)
+			e.edenUsed.Collect(ch)
 		}
 	}
 }
