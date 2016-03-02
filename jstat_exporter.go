@@ -159,6 +159,30 @@ func (e *Exporter) JstatGccapacity(ch chan<- prometheus.Metric) {
 			}
 			e.newCommit.Set(newCommit)
 			e.newCommit.Collect(ch)
+			oldMax, err := strconv.ParseFloat(parts[7], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.oldMax.Set(oldMax)
+			e.oldMax.Collect(ch)
+			oldCommit, err := strconv.ParseFloat(parts[8], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.oldCommit.Set(oldCommit)
+			e.oldCommit.Collect(ch)
+			metaMax, err := strconv.ParseFloat(parts[11], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.metaMax.Set(metaMax)
+			e.metaMax.Collect(ch)
+			metaCommit, err := strconv.ParseFloat(parts[12], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.metaCommit.Set(metaCommit)
+			e.metaCommit.Collect(ch)
 		}
 	}
 }
