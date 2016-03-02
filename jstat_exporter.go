@@ -36,6 +36,8 @@ type Exporter struct {
 	sv0Used   prometheus.Gauge
 	sv1Used   prometheus.Gauge
 	edenUsed   prometheus.Gauge
+	fgcTimes   prometheus.Counter
+	fgcSec   prometheus.Counter
 }
 
 func NewExporter(jstatPath string, targetPid string) *Exporter {
@@ -97,6 +99,16 @@ func NewExporter(jstatPath string, targetPid string) *Exporter {
 			Name:      "edenUsed",
 			Help:      "edenUsed",
 		}),
+		fgcTimes: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "fgcTimes",
+			Help:      "fgcTimes",
+		}),
+		fgcSec: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "fgcSec",
+			Help:      "fgcSec",
+		}),
 	}
 }
 
@@ -113,6 +125,8 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	e.sv0Used.Describe(ch)
 	e.sv1Used.Describe(ch)
 	e.edenUsed.Describe(ch)
+	e.fgcTimes.Describe(ch)
+	e.fgcSec.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface.
@@ -120,6 +134,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.JstatGccapacity(ch)
 	e.JstatGcold(ch)
 	e.JstatGcnew(ch)
+	e.JstatGc(ch)
 }
 
 func (e *Exporter) JstatGccapacity(ch chan<- prometheus.Metric) {
@@ -202,6 +217,32 @@ func (e *Exporter) JstatGcnew(ch chan<- prometheus.Metric) {
 			}
 			e.edenUsed.Set(edenUsed)
 			e.edenUsed.Collect(ch)
+		}
+	}
+}
+
+func (e *Exporter) JstatGc(ch chan<- prometheus.Metric) {
+
+	out, err := exec.Command(e.jstatPath, "-gc", e.targetPid).Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, line := range strings.Split(string(out), "\n") {
+		if i == 1 {
+			parts := strings.Fields(line)
+			fgcTimes, err := strconv.ParseFloat(parts[14], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.fgcTimes.Set(fgcTimes)
+			e.fgcTimes.Collect(ch)
+			fgcSec, err := strconv.ParseFloat(parts[15], 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			e.fgcSec.Set(fgcSec)
+			e.fgcSec.Collect(ch)
 		}
 	}
 }
