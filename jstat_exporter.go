@@ -23,21 +23,21 @@ var (
 )
 
 type Exporter struct {
-	jstatPath string
-	targetPid string
-	newMax  prometheus.Gauge
+	jstatPath  string
+	targetPid  string
+	newMax     prometheus.Gauge
 	newCommit  prometheus.Gauge
-	oldMax  prometheus.Gauge
+	oldMax     prometheus.Gauge
 	oldCommit  prometheus.Gauge
-	metaMax  prometheus.Gauge
-	metaCommit  prometheus.Gauge
-	metaUsed  prometheus.Gauge
-	oldUsed   prometheus.Gauge
-	sv0Used   prometheus.Gauge
-	sv1Used   prometheus.Gauge
+	metaMax    prometheus.Gauge
+	metaCommit prometheus.Gauge
+	metaUsed   prometheus.Gauge
+	oldUsed    prometheus.Gauge
+	sv0Used    prometheus.Gauge
+	sv1Used    prometheus.Gauge
 	edenUsed   prometheus.Gauge
 	fgcTimes   prometheus.Counter
-	fgcSec   prometheus.Counter
+	fgcSec     prometheus.Counter
 }
 
 func NewExporter(jstatPath string, targetPid string) *Exporter {
