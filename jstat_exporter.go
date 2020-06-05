@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/log"
 )
 
@@ -146,7 +147,7 @@ func (e *Exporter) JstatGccapacity(ch chan<- prometheus.Metric) {
 
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
-			parts := strings.Fields(line)
+			parts := strings.Fields(strings.ReplaceAll(line,",","."))
 			newMax, err := strconv.ParseFloat(parts[1], 64)
 			if err != nil {
 				log.Fatal(err)
@@ -196,7 +197,7 @@ func (e *Exporter) JstatGcold(ch chan<- prometheus.Metric) {
 
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
-			parts := strings.Fields(line)
+			parts := strings.Fields(strings.ReplaceAll(line,",","."))
 			metaUsed, err := strconv.ParseFloat(parts[1], 64)
 			if err != nil {
 				log.Fatal(err)
@@ -222,7 +223,7 @@ func (e *Exporter) JstatGcnew(ch chan<- prometheus.Metric) {
 
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
-			parts := strings.Fields(line)
+			parts := strings.Fields(strings.ReplaceAll(line,",","."))
 			sv0Used, err := strconv.ParseFloat(parts[2], 64)
 			if err != nil {
 				log.Fatal(err)
@@ -254,12 +255,12 @@ func (e *Exporter) JstatGc(ch chan<- prometheus.Metric) {
 
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
-			parts := strings.Fields(line)
+			parts := strings.Fields(strings.ReplaceAll(line,",","."))
 			fgcTimes, err := strconv.ParseFloat(parts[14], 64)
 			if err != nil {
 				log.Fatal(err)
 			}
-			e.fgcTimes.Set(fgcTimes)
+			e.fgcTimes.Add(fgcTimes)
 			e.fgcTimes.Collect(ch)
 			fgcSec, err := strconv.ParseFloat(parts[15], 64)
 			if err != nil {
@@ -278,7 +279,7 @@ func main() {
 	prometheus.MustRegister(exporter)
 
 	log.Printf("Starting Server: %s", *listenAddress)
-	http.Handle(*metricsPath, prometheus.Handler())
+	http.Handle(*metricsPath, promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>
 		<head><title>jstat Exporter</title></head>
