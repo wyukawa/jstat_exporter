@@ -255,12 +255,13 @@ func (e *Exporter) JstatGc(ch chan<- prometheus.Metric) {
 
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
-			parts := strings.Fields(line)
+			parts := strings.Fields(strings.ReplaceAll(line,",","."))
+			log.Printf("%v", parts)
 			fgcTimes, err := strconv.ParseFloat(parts[14], 64)
 			if err != nil {
 				log.Fatal(err)
 			}
-			e.fgcTimes.Set(fgcTimes)
+			e.fgcTimes.Add(fgcTimes)
 			e.fgcTimes.Collect(ch)
 			fgcSec, err := strconv.ParseFloat(parts[15], 64)
 			if err != nil {
