@@ -147,7 +147,7 @@ func (e *Exporter) JstatGccapacity(ch chan<- prometheus.Metric) {
 
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
-			parts := strings.Fields(line)
+			parts := strings.Fields(strings.ReplaceAll(line,",","."))
 			newMax, err := strconv.ParseFloat(parts[1], 64)
 			if err != nil {
 				log.Fatal(err)
@@ -197,7 +197,7 @@ func (e *Exporter) JstatGcold(ch chan<- prometheus.Metric) {
 
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
-			parts := strings.Fields(line)
+			parts := strings.Fields(strings.ReplaceAll(line,",","."))
 			metaUsed, err := strconv.ParseFloat(parts[1], 64)
 			if err != nil {
 				log.Fatal(err)
@@ -223,7 +223,7 @@ func (e *Exporter) JstatGcnew(ch chan<- prometheus.Metric) {
 
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
-			parts := strings.Fields(line)
+			parts := strings.Fields(strings.ReplaceAll(line,",","."))
 			sv0Used, err := strconv.ParseFloat(parts[2], 64)
 			if err != nil {
 				log.Fatal(err)
@@ -256,7 +256,6 @@ func (e *Exporter) JstatGc(ch chan<- prometheus.Metric) {
 	for i, line := range strings.Split(string(out), "\n") {
 		if i == 1 {
 			parts := strings.Fields(strings.ReplaceAll(line,",","."))
-			log.Printf("%v", parts)
 			fgcTimes, err := strconv.ParseFloat(parts[14], 64)
 			if err != nil {
 				log.Fatal(err)
